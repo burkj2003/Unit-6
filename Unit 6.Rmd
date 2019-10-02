@@ -1,0 +1,171 @@
+
+library(class)
+library(caret)
+library(e1071)
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+# set seed
+set.seed(8)
+# splitPerc = .75
+
+# Read in csv files
+test = read.csv("~/03-School/DS 6306/Unit6/titanic_test.csv")
+train = read.csv("~/03-School/DS 6306/Unit6/titanic_train.csv")
+newData = read.csv("~/03-School/DS 6306/Unit6/gender_submission.csv")
+
+# add new data not on GitHub
+test = merge(test, newData, by = "PassengerId")
+
+# tidy data by re-ordering new data to match test to train
+test = test[,c(1,12,2,3,4,5,6,7,8,9,10,11)]
+
+# omit n/a data
+test <- na.omit(test)
+train <- na.omit(train)
+
+# Plot the age vs fare graphs 
+test %>% ggplot(aes(x = Age, Pclass,color = Survived)) + geom_point() + ggtitle("Age vs Passenger Class") + theme(plot.title = element_text(hjust = 0.5))
+train %>% ggplot(aes(x = Age, Pclass,color = Survived)) + geom_point() + ggtitle("Age vs Passenger Class") + theme(plot.title = element_text(hjust = 0.5))
+
+# find the confustion matrix and classification table
+classifications = knn(train[,c(3,6)],test[,c(3,6)],train$Survived, prob = TRUE, k = 30)
+table(classifications,test$Survived)
+confusionMatrix(table(classifications,test$Survived))
+
+
+# Find the best k-value and graph it
+accs = data.frame(accuracy = numeric(30), k = numeric(30))
+
+for(i in 1:30)
+{
+  classifications = knn(train[,c(3,6)],test[,c(3,6)],train$Survived, prob = TRUE, k = i)
+  table(test$Survived,classifications)
+  CM = confusionMatrix(table(test$Survived,classifications))
+  accs$accuracy[i] = CM$overall[1]
+  accs$k[i] = i
+}
+
+plot(accs$k,accs$accuracy, type = "l", xlab = "k")
+
+# make male and female test, train data frames
+mtest <- filter(test, Sex == "male")
+mtrain <- filter(train, Sex == "male")
+
+ftest <- filter(test, Sex == "female")
+ftrain <- filter(train, Sex == "female")
+
+# Plot the age vs fare graphs for female first
+ftest %>% ggplot(aes(x = Age, Pclass,color = Survived)) + geom_point() + ggtitle("Age vs Passenger Class") + theme(plot.title = element_text(hjust = 0.5))
+ftrain %>% ggplot(aes(x = Age, Pclass,color = Survived)) + geom_point() + ggtitle("Age vs Passenger Class") + theme(plot.title = element_text(hjust = 0.5))
+
+# find the confustion matrix and classification table
+classifications = knn(ftrain[,c(3,6)],ftest[,c(3,6)],ftrain$Survived, prob = TRUE, k = 30)
+table(classifications,ftest$Survived)
+confusionMatrix(table(classifications, ftest$Survived))
+
+
+# Find the best k-value and graph it
+accs = data.frame(accuracy = numeric(30), k = numeric(30))
+
+for(i in 1:30)
+{
+  classifications = knn(ftrain[,c(3,6)],ftest[,c(3,6)],ftrain$Survived, prob = TRUE, k = i)
+  table(ftest$Survived,classifications)
+  CM = confusionMatrix(table(ftest$Survived,classifications))
+  accs$accuracy[i] = CM$overall[1]
+  accs$k[i] = i
+}
+
+# Plot the age vs fare graphs for males
+mtest %>% ggplot(aes(x = Age, Pclass,color = Survived)) + geom_point() + ggtitle("Age vs Passenger Class") + theme(plot.title = element_text(hjust = 0.5))
+mtrain %>% ggplot(aes(x = Age, Pclass,color = Survived)) + geom_point() + ggtitle("Age vs Passenger Class") + theme(plot.title = element_text(hjust = 0.5))
+
+# find the confustion matrix and classification table
+classifications = knn(mtrain[,c(3,6)],mtest[,c(3,6)],mtrain$Survived, prob = TRUE, k = 30)
+table(classifications,mtest$Survived)
+confusionMatrix(table(classifications, mtest$Survived))
+
+
+# Find the best k-value and graph it
+accs = data.frame(accuracy = numeric(30), k = numeric(30))
+
+for(i in 1:30)
+{
+  classifications = knn(mtrain[,c(3,6)],mtest[,c(3,6)],mtrain$Survived, prob = TRUE, k = i)
+  table(mtest$Survived,classifications)
+  CM = confusionMatrix(table(mtest$Survived,classifications))
+  accs$accuracy[i] = CM$overall[1]
+  accs$k[i] = i
+}
+
+###################################################
+
+set.seed(6)
+splitPerc = .75
+irisVersVirg = iris %>% filter(Species == "versicolor" | Species == "virginica")
+summary(irisVersVirg)
+irisVersVirg = droplevels(irisVersVirg,exclude = "setosa")
+summary(irisVersVirg)
+
+trainIndices = sample(1:dim(irisVersVirg)[1],round(splitPerc * dim(irisVersVirg)[1]))
+train = irisVersVirg[trainIndices,]
+test = irisVersVirg[-trainIndices,]
+
+irisVersVirg %>% ggplot(aes(x = Sepal.Length,Sepal.Width,color = Species)) + geom_point()
+
+# k = 3
+classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 3)
+table(classifications,test$Species)
+confusionMatrix(table(classifications,test$Species))
+
+# k = 5
+classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 5)
+table(test$Species,classifications)
+confusionMatrix(table(test$Species,classifications))
+
+# k = 10
+classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 10)
+table(test$Species,classifications)
+confusionMatrix(table(test$Species,classifications))
+
+
+# k = 20
+classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 20)
+table(test$Species,classifications)
+CM = confusionMatrix(table(test$Species,classifications))
+CM$overall[1]
+```
+
+## Loop for many k and one training / test partition
+```{r}
+accs = data.frame(accuracy = numeric(30), k = numeric(30))
+
+for(i in 1:30)
+{
+  classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = i)
+  table(test$Species,classifications)
+  CM = confusionMatrix(table(test$Species,classifications))
+  accs$accuracy[i] = CM$overall[1]
+  accs$k[i] = i
+}
+
+plot(accs$k,accs$accuracy, type = "l", xlab = "k")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
