@@ -1,4 +1,8 @@
 
+########################
+Unit 6 Part 1
+
+
 library(class)
 library(caret)
 library(e1071)
@@ -102,47 +106,37 @@ for(i in 1:30)
 
 ###################################################
 
+# Part 2a
+
 set.seed(6)
-splitPerc = .75
-irisVersVirg = iris %>% filter(Species == "versicolor" | Species == "virginica")
-summary(irisVersVirg)
-irisVersVirg = droplevels(irisVersVirg,exclude = "setosa")
-summary(irisVersVirg)
+splitPerc = .70
+#irisVersVirg = iris %>% filter(Species == "versicolor" | Species == "virginica")
+#summary(irisVersVirg)
+#irisVersVirg = droplevels(irisVersVirg,exclude = "setosa")
+#summary(irisVersVirg)
 
-trainIndices = sample(1:dim(irisVersVirg)[1],round(splitPerc * dim(irisVersVirg)[1]))
-train = irisVersVirg[trainIndices,]
-test = irisVersVirg[-trainIndices,]
+trainIndices = sample(1:dim(iris)[1],round(splitPerc * dim(iris)[1]))
+train = iris[trainIndices,]
+test = iris[-trainIndices,]
 
-irisVersVirg %>% ggplot(aes(x = Sepal.Length,Sepal.Width,color = Species)) + geom_point()
-
-# k = 3
-classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 3)
-table(classifications,test$Species)
-confusionMatrix(table(classifications,test$Species))
-
-# k = 5
-classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 5)
-table(test$Species,classifications)
-confusionMatrix(table(test$Species,classifications))
-
-# k = 10
-classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 10)
-table(test$Species,classifications)
-confusionMatrix(table(test$Species,classifications))
-
+iris %>% ggplot(aes(x = Sepal.Length,Sepal.Width,color = Species)) + geom_point() + ggtitle("Iris Sepal Width vs Iris Sepal Length") + theme(plot.title = element_text(hjust = 0.5))
 
 # k = 20
 classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 20)
 table(test$Species,classifications)
 CM = confusionMatrix(table(test$Species,classifications))
 CM$overall[1]
-```
 
-## Loop for many k and one training / test partition
-```{r}
-accs = data.frame(accuracy = numeric(30), k = numeric(30))
+# k = 38
+classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = 38)
+table(test$Species,classifications)
+CM = confusionMatrix(table(test$Species,classifications))
+CM$overall[1]
 
-for(i in 1:30)
+
+accs = data.frame(accuracy = numeric(90), k = numeric(90))
+
+for(i in 1:90)
 {
   classifications = knn(train[,c(1,2)],test[,c(1,2)],train$Species, prob = TRUE, k = i)
   table(test$Species,classifications)
@@ -151,11 +145,30 @@ for(i in 1:30)
   accs$k[i] = i
 }
 
-plot(accs$k,accs$accuracy, type = "l", xlab = "k")
+plot(accs$k,accs$accuracy, type = "l", xlab = "k", ylab = "Accuracy", main = "K-factor vs Accuracy") 
 
+#################################################
 
+#Part 2b
 
+set.seed(6)
+#splitPerc = .70
+#irisVersVirg = iris %>% filter(Species == "versicolor" | Species == "virginica")
+#summary(irisVersVirg)
+#irisVersVirg = droplevels(irisVersVirg,exclude = "setosa")
+#summary(irisVersVirg)
 
+trainIndices = sample(1:dim(iris)[1],round(splitPerc * dim(iris)[1]))
+train = iris[trainIndices,]
+#test = iris[-trainIndices,]
+
+iris %>% ggplot(aes(x = Sepal.Length,Sepal.Width,color = Species)) + geom_point() + ggtitle("Iris Sepal Width vs Iris Sepal Length") + theme(plot.title = element_text(hjust = 0.5))
+
+# k = 20
+classifications = knn.cv(train[,c(1,2)],train$Species, prob = TRUE, k = 20)
+classifications
+data.frame(classifications = classifications, true = train$Species)
+confusionMatrix(classifications, train$Species)
 
 
 
